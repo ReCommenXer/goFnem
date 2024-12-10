@@ -1,4 +1,5 @@
--- ฟังก์ชันสำหรับตรวจสอบและสร้างไฟล์ถ้ายังไม่มี
+Selct_Fish_Slot = "10"
+
 function loadcheck()
     local fileName = "RebornXer Hub go Fish " .. game.Players.LocalPlayer.Name .. ".json"
     if not isfile(fileName) then
