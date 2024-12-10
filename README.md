@@ -1,43 +1,62 @@
+-- ฟังก์ชันสำหรับตรวจสอบและสร้างไฟล์ถ้ายังไม่มี
 function loadcheck()
-    if isfile("RebornXer Hub go Fish "..game.Players.LocalPlayer.Name..".json") then
-    else
-    writefile("RebornXer Hub go Fish "..game.Players.LocalPlayer.Name..".json",game:GetService("HttpService"):JSONEncode(_G.SST))
-    return
+    local fileName = "RebornXer Hub go Fish " .. game.Players.LocalPlayer.Name .. ".json"
+    if not isfile(fileName) then
+        writefile(fileName, game:GetService("HttpService"):JSONEncode(_G.SST))
     end
-    end
-    pcall(function()
-        _G.SST = {Select_Island = "", Select_Skill = "",Auto_Upgrade = false,Select_NPCs = ""}
-    end)
-    function LoadSetting()
-        if isfile("RebornXer Hub go Fish "..game.Players.LocalPlayer.Name..".json") then
-            -- โหลดไฟล์
-            local fileContent = readfile("RebornXer Hub go Fish "..game.Players.LocalPlayer.Name..".json")
-            print("Loaded file content: ", fileContent) -- ตรวจสอบเนื้อหาของไฟล์
-            
-            -- แปลงไฟล์จาก JSON
-            local success, decoded = pcall(function()
-                return game:GetService("HttpService"):JSONDecode(fileContent)
-            end)
-            
-            if success then
-                _G.SST = decoded
-            else
-            end
-        else
-            SaveSetting()
-        end
-    end
-    function SaveSetting()
+end
 
-    if isfile("RebornXer Hub go Fish "..game.Players.LocalPlayer.Name..".json") then
-    writefile("RebornXer Hub go Fish "..game.Players.LocalPlayer.Name..".json",game:GetService("HttpService"):JSONEncode(_G.SST))
+-- ค่าเริ่มต้นของ _G.SST
+pcall(function()
+    _G.SST = {
+        Select_Island = "",
+        Select_Skill = "",
+        Auto_Upgrade = false,
+        Select_NPCs = "",
+        SaveCFrame = "0,0,0",
+        Selct_Fish_Slot = "10",
+        Auto_Farm = false
+    }
+end)
+
+-- ฟังก์ชันสำหรับโหลดค่าจากไฟล์ JSON
+function LoadSetting()
+    local fileName = "RebornXer Hub go Fish " .. game.Players.LocalPlayer.Name .. ".json"
+    if isfile(fileName) then
+        local fileContent = readfile(fileName)
+        print("Loaded file content: ", fileContent) -- Debug: ตรวจสอบไฟล์ที่โหลดมา
+
+        local success, decoded = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(fileContent)
+        end)
+
+        if success then
+            _G.SST = decoded
+            print("Settings loaded successfully:", _G.SST)
+        else
+            warn("Failed to decode JSON:", decoded)
+        end
     else
-    loadcheck()
+        SaveSetting() -- ถ้าไม่มีไฟล์ เรียกฟังก์ชัน SaveSetting เพื่อสร้างใหม่
     end
+end
+
+-- ฟังก์ชันสำหรับบันทึกค่าลงไฟล์ JSON
+function SaveSetting()
+    local fileName = "RebornXer Hub go Fish " .. game.Players.LocalPlayer.Name .. ".json"
+    local jsonData = game:GetService("HttpService"):JSONEncode(_G.SST)
+
+    if isfile(fileName) then
+        writefile(fileName, jsonData)
+        print("Settings saved successfully!")
+    else
+        loadcheck() -- ตรวจสอบและสร้างไฟล์ใหม่ถ้ายังไม่มี
     end
-    
-    loadcheck()
-    LoadSetting()
+end
+
+-- เรียกฟังก์ชัน
+loadcheck()
+LoadSetting()
 
 ---------------------------------------------------- Ui
 
@@ -2848,6 +2867,8 @@ function Tp(Pos)
 			part = player.Character.HumanoidRootPart.CFrame
 		end
 		end 
+
+
 ----------------------------- Ui Set
 local RenUi = Update:AddWindow("RebornXer Hub","10039618734",Enum.KeyCode.RightControl)
 
@@ -2856,7 +2877,9 @@ local Misc = RenUi:AddTab("Misc","6034509993")
 local Setting = RenUi:AddTab("","")
 
 local S = RenUi:AddTabH("Top","14134158045")
-
+Setting:AddButtonLeft("Dex",function()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HummingBird8/HummingRn/main/OptimizedDexForSolara.lua"))()
+end)
 Main:AddSeperatorLeft("Info")
 Main:AddLabelLeft("Wecome To RebornXer Hub Script")
 Main:AddLabelLeft("Map : Fisch")
@@ -2880,32 +2903,60 @@ Main:AddDropdownRight("Select Mode",Mode_List,_G.SST.Select_Mode,function(a)
 		Shackdeley = 0.9
 	end
 end)
-    Main:AddToggleLeft("Farm",Farm,function(a)
-        Farm = a
+
+Main:AddToggleRight("White Screen [Reduce GPU]",_G.SST.White_Screen,function(a)
+	White_Screen = a
+	_G.SST.White_Screen = White_Screen
+	SaveSetting()
+	if _G.SST.White_Screen == true then
+		game:GetService("RunService"):Set3dRenderingEnabled(false)
+	elseif _G.SST.White_Screen == false then
+		game:GetService("RunService"):Set3dRenderingEnabled(true)
+	end
+end)
+    Main:AddToggleLeft("Auto Farm",_G.SST.Auto_Farm,function(a)
+    Auto_Farm = a
+	_G.SST.Auto_Farm = Auto_Farm
+	SaveSettings()
     end)
 
     spawn(function()
         while wait() do
             pcall(function()
-                if Farm then
-					game:GetService("Players").LocalPlayer.gui.autofishing.Value = true
+                if _G.SST.Auto_Farm then
+                    local player = game.Players.LocalPlayer
+                    if (Vector3.new(_G.SST.SaveCFrame) - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude >= 10 then
+                        Tp(_G.SST.SaveCFrame)
+					   elseif (Vector3.new(_G.SST.SaveCFrame) - game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <= 10 then
+                           game:GetService("Players").LocalPlayer.gui.autofishing.Value = true
+                        end
+                                               
       	          end
             end)
         end
     end)
-	Main:AddToggleLeft("White Screen [Reduce GPU]",_G.SST.White_Screen,function(a)
-		White_Screen = a
-		_G.SST.White_Screen = White_Screen
-		SaveSetting()
-		if _G.SST.White_Screen == true then
-			game:GetService("RunService"):Set3dRenderingEnabled(false)
-		elseif _G.SST.White_Screen == false then
-			game:GetService("RunService"):Set3dRenderingEnabled(true)
-		end
-	end)
+Main:AddButtonLeft("Save CFrame", function(a)
+    local player = game.Players.LocalPlayer
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local PlayerCFrame = player.Character.HumanoidRootPart.CFrame
+       SaveCFrame = PlayerCFrame
+       _G.SST.SaveCFrame = SaveCFrame
+        SaveSettings()
+    else
+        warn("ไม่พบ HumanoidRootPart หรือ Character")
+    end
+end)
+
+
 	Main:AddSeperatorRight("Sell")
 
-	Main:AddToggleRight("Auto Sell All",_G.SST.Auto_Sell_All,function(a)
+Main:AddSliderRight("Select Fish Slost",1,350,_G.SST.Selct_Fish_Slot,function(a)
+	Selct_Fish_Slot = a
+	_G.SST.Selct_Fish_Slot = Selct_Fish_Slot
+	SaveSetting()
+end)
+
+	Main:AddToggleRight("Auto Sell ",_G.SST.Auto_Sell_All,function(a)
 		Auto_Sell_All = a
 		_G.SST.Auto_Sell_All = Auto_Sell_All
 		SaveSettings()
@@ -2913,37 +2964,40 @@ end)
 
 	spawn(function()
 		while wait() do
-		pcall(function()
-			if _G.SST.Auto_Sell_All then
-				if workspace.NPCs:FindFirstChild("Fish Trader") then
-					Bring(workspace.NPCs:FindFirstChild("Fish Trader").npcModel.Position)
-				end
+			pcall(function()
+				if _G.SST.Auto_Sell_All then
+					local player = game:GetService("Players").LocalPlayer
+					local fishes = player.inventory:FindFirstChild("fishes")
+	
+					if fishes then
+						local inventorySlots = fishes:GetAttribute("inventorySlots")
+						if inventorySlots then
+							if inventorySlots >= _G.SST.Selct_Fish_Slot then
+								local fishTrader = workspace.NPCs:FindFirstChild("Fish Trader")
+								if fishTrader then
+									Tp(fishTrader.npcModel.WorldPivot) -- ตรวจสอบว่า Tp ถูกกำหนดไว้แล้วหรือยัง
+									game:GetService("ReplicatedStorage").events.fishing.sellAllFishes:InvokeServer()
+								end
+							end
+						else
+							warn("ไม่พบ 'inventorySlots' ใน 'fishes'")
+						end
+					else
+						warn("ไม่พบ 'fishes' ใน inventory")
+					end
 				end
 			end)
 		end
 	end)
-	Main:AddToggleRight("White Screen [Reduce GPU]",_G.SST.White_Screen,function(a)
-		White_Screen = a
-		_G.SST.White_Screen = White_Screen
-		SaveSetting()
-		if _G.SST.White_Screen == true then
-			game:GetService("RunService"):Set3dRenderingEnabled(false)
-		elseif _G.SST.White_Screen == false then
-			game:GetService("RunService"):Set3dRenderingEnabled(true)
-		end
-	end)
+	
+	
+
 	Main:AddSeperatorRight("Skill")
 Main:AddDropdownRight("Select skill",{"Fishing Speed","Strength","Luck"},_G.SST.Select_Skill,function(a)
 	Select_Skill = a
 	_G.SST.Select_Skill = Select_Skill
 SaveSettings()
-    if _G.SST.Select_Skill == "Fishing Speed" then
-		typeSkill = "speedBoost"
-	elseif _G.SST.Select_Skill == "Strength" then
-		typeSkill = "powerBoost"
-	elseif _G.SST.Select_Skill == "Luck" then
-		typeSkill = "luckBoost"
-	end
+
 end)
 
 Main:AddToggleRight("Auto Upgrade",_G.SST.Auto_Upgrade,function(a)
@@ -2953,11 +3007,17 @@ Main:AddToggleRight("Auto Upgrade",_G.SST.Auto_Upgrade,function(a)
 end)
 
 spawn(function()
-	while wait() do
+	while wait(1) do
 	pcall(function()
 		if _G.SST.Auto_Upgrade then
 			if game:GetService("Players").LocalPlayer.realstats.upgradePoints.Value >= 1 then
-				game:GetService("ReplicatedStorage").events.fishing.canPurchaseUpgrade:InvokeServer(typeSkill)
+                    if _G.SST.Select_Skill == "Fishing Speed" then
+		game:GetService("ReplicatedStorage").events.fishing.canPurchaseUpgrade:InvokeServer("speedBoost")
+	elseif _G.SST.Select_Skill == "Strength" then
+		game:GetService("ReplicatedStorage").events.fishing.canPurchaseUpgrade:InvokeServer("powerBoost")
+	elseif _G.SST.Select_Skill == "Luck" then
+		game:GetService("ReplicatedStorage").events.fishing.canPurchaseUpgrade:InvokeServer("luckBoost")
+	end
 			end
 			end
 		end)
@@ -2970,6 +3030,7 @@ end)
 		if v.Name == "Part" then
 			table.insert(IslandList ,v.oceanNameTemplate.oceanName.Text)
 		end end
+
 	Misc:AddDropdownLeft("Select island",IslandList,_G.SST.Select_Island,function(a)
 	Select_Island = a
 	_G.SST.Select_Island = Select_Island
@@ -2987,7 +3048,7 @@ end)
 		end
 	end
 	end)
-	
+
 	NPCsList = {}
     for i,v in pairs(workspace.NPCs:GetChildren()) do
 			table.insert(NPCsList ,v.Name)
@@ -3001,7 +3062,65 @@ end)
 	Misc:AddButtonLeft("Teleport To Island",function()
 		for i,v in pairs(workspace.NPCs:GetChildren()) do
 			if v.Name == _G.SST.Select_NPCs then
-		Tp(v.Position)
+		Tp(v.WorldPivot)
 			end
 		end
 	end)
+
+    Misc:AddSeperatorRight("Server")
+    
+    Misc:AddButtonRight("Rejoin Server",function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
+    end)
+    
+    Misc:AddButtonRight("Server Hop",function()
+        Hop()
+    end)
+    
+    Misc:AddButtonRight("Hop To Lower Player",function()
+        getgenv().AutoTeleport = true
+        getgenv().DontTeleportTheSameNumber = true 
+        getgenv().CopytoClipboard = false
+        if not game:IsLoaded() then
+            print("Game is loading waiting...")
+        end
+        local maxplayers = math.huge
+        local serversmaxplayer;
+        local goodserver;
+        local gamelink = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100" 
+        function serversearch()
+            for _, v in pairs(game:GetService("HttpService"):JSONDecode(game:HttpGetAsync(gamelink)).data) do
+                if type(v) == "table" and v.playing ~= nil and maxplayers > v.playing then
+                    serversmaxplayer = v.maxPlayers
+                    maxplayers = v.playing
+                    goodserver = v.id
+                end
+            end       
+        end
+        function getservers()
+            serversearch()
+            for i,v in pairs(game:GetService("HttpService"):JSONDecode(game:HttpGetAsync(gamelink))) do
+                if i == "nextPageCursor" then
+                    if gamelink:find("&cursor=") then
+                        local a = gamelink:find("&cursor=")
+                        local b = gamelink:sub(a)
+                        gamelink = gamelink:gsub(b, "")
+                    end
+                    gamelink = gamelink .. "&cursor=" ..v
+                    getservers()
+                end
+            end
+        end 
+        getservers()
+        if AutoTeleport then
+            if DontTeleportTheSameNumber then 
+                if #game:GetService("Players"):GetPlayers() - 4  == maxplayers then
+                    return warn("It has same number of players (except you)")
+                elseif goodserver == game.JobId then
+                    return warn("Your current server is the most empty server atm") 
+                end
+            end
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, goodserver)
+        end
+    end)
+    
