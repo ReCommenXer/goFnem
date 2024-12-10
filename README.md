@@ -6,7 +6,7 @@ function loadcheck()
     end
     end
     pcall(function()
-        _G.SST = {Select_Island = "", Select_Skill = "",Auto_Upgrade = false}
+        _G.SST = {Select_Island = "", Select_Skill = "",Auto_Upgrade = false,Select_NPCs = ""}
     end)
     function LoadSetting()
         if isfile("RebornXer Hub go Fish "..game.Players.LocalPlayer.Name..".json") then
@@ -2841,6 +2841,13 @@ function Tp(Pos)
 		player.Character.HumanoidRootPart.CFrame = Pos
 	end
     end    
+
+	function Bring(part)
+		local player = game.Players.LocalPlayer
+		if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			part = player.Character.HumanoidRootPart.CFrame
+		end
+		end 
 ----------------------------- Ui Set
 local RenUi = Update:AddWindow("RebornXer Hub","10039618734",Enum.KeyCode.RightControl)
 
@@ -2886,8 +2893,45 @@ end)
             end)
         end
     end)
+	Main:AddToggleLeft("White Screen [Reduce GPU]",_G.SST.White_Screen,function(a)
+		White_Screen = a
+		_G.SST.White_Screen = White_Screen
+		SaveSetting()
+		if _G.SST.White_Screen == true then
+			game:GetService("RunService"):Set3dRenderingEnabled(false)
+		elseif _G.SST.White_Screen == false then
+			game:GetService("RunService"):Set3dRenderingEnabled(true)
+		end
+	end)
+	Main:AddSeperatorRight("Sell")
 
+	Main:AddToggleRight("Auto Sell All",_G.SST.Auto_Sell_All,function(a)
+		Auto_Sell_All = a
+		_G.SST.Auto_Sell_All = Auto_Sell_All
+		SaveSettings()
+	end)
 
+	spawn(function()
+		while wait() do
+		pcall(function()
+			if _G.SST.Auto_Sell_All then
+				if workspace.NPCs:FindFirstChild("Fish Trader") then
+					Bring(workspace.NPCs:FindFirstChild("Fish Trader").npcModel.Position)
+				end
+				end
+			end)
+		end
+	end)
+	Main:AddToggleRight("White Screen [Reduce GPU]",_G.SST.White_Screen,function(a)
+		White_Screen = a
+		_G.SST.White_Screen = White_Screen
+		SaveSetting()
+		if _G.SST.White_Screen == true then
+			game:GetService("RunService"):Set3dRenderingEnabled(false)
+		elseif _G.SST.White_Screen == false then
+			game:GetService("RunService"):Set3dRenderingEnabled(true)
+		end
+	end)
 	Main:AddSeperatorRight("Skill")
 Main:AddDropdownRight("Select skill",{"Fishing Speed","Strength","Luck"},_G.SST.Select_Skill,function(a)
 	Select_Skill = a
@@ -2912,7 +2956,7 @@ spawn(function()
 	while wait() do
 	pcall(function()
 		if _G.SST.Auto_Upgrade then
-			if game:GetService("Players").LocalPlayer.realstats.upgradePoints.Value >= "1" then
+			if game:GetService("Players").LocalPlayer.realstats.upgradePoints.Value >= 1 then
 				game:GetService("ReplicatedStorage").events.fishing.canPurchaseUpgrade:InvokeServer(typeSkill)
 			end
 			end
@@ -2943,4 +2987,21 @@ end)
 		end
 	end
 	end)
-    
+	
+	NPCsList = {}
+    for i,v in pairs(workspace.NPCs:GetChildren()) do
+			table.insert(NPCsList ,v.Name)
+		end
+	Misc:AddDropdownLeft("Select NPCs",NPCsList,_G.SST.Select_NPCs,function(a)
+		Select_NPCs = a
+	_G.SST.Select_NPCs = Select_NPCs
+	SaveSetting()
+	end)
+
+	Misc:AddButtonLeft("Teleport To Island",function()
+		for i,v in pairs(workspace.NPCs:GetChildren()) do
+			if v.Name == _G.SST.Select_NPCs then
+		Tp(v.Position)
+			end
+		end
+	end)
